@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perceptron Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   THEME VARIABLES
+   ============================================================ */
+:root {
+  --bg-grad-1: #0a0a0a;
+  --bg-grad-2: #141414;
+  --bg-grad-3: #0a0a0a;
+  --glass-bg: rgba(20, 20, 20, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-hover: rgba(30, 30, 30, 0.7);
+  --text-primary: #f5f5f5;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --accent: #ffffff;
+  --accent-2: #d4d4d4;
+  --accent-glow: rgba(255, 255, 255, 0.15);
+  --positive: #22c55e;
+  --negative: #ef4444;
+  --warning: #eab308;
+  --info: #3b82f6;
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+[data-theme="light"] {
+  --bg-grad-1: #ffffff;
+  --bg-grad-2: #f5f5f5;
+  --bg-grad-3: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.08);
+  --glass-hover: rgba(245, 245, 245, 0.9);
+  --text-primary: #0a0a0a;
+  --text-secondary: #525252;
+  --text-muted: #a3a3a3;
+  --accent: #0a0a0a;
+  --accent-2: #404040;
+  --accent-glow: rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2), var(--bg-grad-3));
+  background-attachment: fixed;
+  color: var(--text-primary);
+  min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+h1, h2, h3 { font-weight: 700; letter-spacing: -0.03em; }
+h2 { font-size: 1.1rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+h2 .icon { font-size: 1.1rem; }
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.app-header {
+  position: sticky; top: 0; z-index: 100;
+  backdrop-filter: blur(20px);
+  background: var(--glass-bg);
+  border-bottom: 1px solid var(--glass-border);
+  padding: 0.85rem 1.5rem;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 0.5rem;
+}
+.brand { display: flex; align-items: center; gap: 0.6rem; }
+.brand-logo {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+}
+.brand-text h1 { font-size: 1.15rem; line-height: 1.1; }
+.brand-text p { font-size: 0.72rem; color: var(--text-secondary); }
+.header-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+.container {
+  max-width: 1400px; margin: 0 auto; padding: 1.5rem;
+  display: grid; gap: 1.25rem;
+}
+.grid-main {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1fr;
+  gap: 1.25rem;
+}
+@media (max-width: 1100px) { .grid-main { grid-template-columns: 1fr; } }
+
+/* ============================================================
+   GLASS CARD
+   ============================================================ */
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  box-shadow: var(--card-shadow);
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.95rem; border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+  background: var(--accent); color: var(--bg-grad-1); font-weight: 600; font-size: 0.82rem; cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+  font-family: inherit;
+}
+.btn:hover { transform: translateY(-1px); opacity: 0.85; }
+.btn:active { transform: translateY(0); }
+.btn-secondary {
+  background: var(--glass-hover); color: var(--text-primary);
+  border: 1px solid var(--glass-border);
+}
+.btn-secondary:hover { border-color: var(--text-secondary); }
+.btn-ghost {
+  background: transparent; color: var(--text-secondary);
+  border: 1px solid var(--glass-border);
+}
+.btn-ghost:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+.btn-sm { padding: 0.35rem 0.7rem; font-size: 0.78rem; }
+.btn-icon {
+  width: 38px; height: 38px; padding: 0; justify-content: center;
+  border-radius: 10px;
+}
+.btn-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+/* ============================================================
+   FORM CONTROLS
+   ============================================================ */
+label { font-size: 0.8rem; color: var(--text-secondary); font-weight: 600; }
+select, input[type="number"], input[type="text"] {
+  width: 100%; padding: 0.5rem 0.7rem;
+  background: var(--glass-hover); color: var(--text-primary);
+  border: 1px solid var(--glass-border); border-radius: var(--radius-sm);
+  font-size: 0.88rem; font-family: inherit;
+  transition: border var(--transition), box-shadow var(--transition);
+}
+select:focus, input:focus {
+  outline: none; border-color: var(--text-secondary);
+}
+input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 4px; border-radius: 2px;
+  background: var(--glass-border);
+  outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent); border: none;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+input[type="range"]::-moz-range-thumb {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+}
+
+/* ============================================================
+   INPUT / WEIGHT ROWS
+   ============================================================ */
+.param-row {
+  display: grid; grid-template-columns: 30px 1fr 70px;
+  gap: 0.6rem; align-items: center; margin-bottom: 0.6rem;
+  padding: 0.5rem; border-radius: var(--radius-sm);
+  background: rgba(0,0,0,0.08); transition: background var(--transition);
+}
+.param-row:hover { background: rgba(0,0,0,0.14); }
+[data-theme="light"] .param-row { background: rgba(0,0,0,0.03); }
+[data-theme="light"] .param-row:hover { background: rgba(0,0,0,0.06); }
+.param-label { font-weight: 700; font-size: 0.85rem; color: var(--text-primary); text-align: center; }
+.param-row input[type="number"] { width: 70px; padding: 0.35rem 0.5rem; font-size: 0.8rem; }
+
+.weight-row {
+  display: grid; grid-template-columns: 30px 1fr 70px;
+  gap: 0.6rem; align-items: center; margin-bottom: 0.6rem;
+  padding: 0.5rem; border-radius: var(--radius-sm);
+  background: rgba(0,0,0,0.08); transition: background var(--transition);
+}
+.weight-row:hover { background: rgba(0,0,0,0.14); }
+[data-theme="light"] .weight-row { background: rgba(0,0,0,0.03); }
+.weight-row .w-label { font-weight: 700; font-size: 0.85rem; text-align: center; }
+.weight-row.positive .w-label { color: var(--positive); }
+.weight-row.negative .w-label { color: var(--negative); }
+.weight-row input[type="number"] { width: 70px; padding: 0.35rem 0.5rem; font-size: 0.8rem; }
+
+/* ============================================================
+   TOOLTIP
+   ============================================================ */
+[data-tooltip] { position: relative; cursor: help; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: #0a0a0a; color: #fff; padding: 0.4rem 0.7rem;
+  border-radius: 8px; font-size: 0.72rem; font-weight: 500;
+  white-space: pre-wrap; width: max-content; max-width: 240px;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s, transform 0.2s;
+  z-index: 200; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+[data-tooltip]:hover::after { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ============================================================
+   COMPUTATION STEPS
+   ============================================================ */
+.steps-list { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; }
+.step-item {
+  padding: 0.4rem 0.6rem; margin-bottom: 0.3rem; border-radius: 8px;
+  background: rgba(0,0,0,0.1); border-left: 3px solid var(--accent);
+  transition: all 0.3s; animation: fadeIn 0.3s;
+}
+[data-theme="light"] .step-item { background: rgba(0,0,0,0.03); }
+.step-item.highlight { border-left-color: var(--warning); background: rgba(245,158,11,0.1); }
+.step-item.final { border-left-color: var(--positive); background: rgba(16,185,129,0.1); font-weight: 700; }
+@keyframes fadeIn { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: translateX(0); } }
+
+/* ============================================================
+   OUTPUT CARDS
+   ============================================================ */
+.output-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.output-card {
+  padding: 1rem; border-radius: var(--radius-sm); text-align: center;
+  background: var(--glass-hover); border: 1px solid var(--glass-border);
+  transition: transform var(--transition);
+}
+.output-card:hover { transform: scale(1.03); }
+.output-card .label { font-size: 0.72rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+.output-card .value { font-size: 1.8rem; font-weight: 800; margin-top: 0.25rem; }
+.output-card.z-card { border-color: var(--info); }
+.output-card.z-card .value { color: var(--info); }
+.output-card.y-card { border-color: var(--accent); }
+.output-card.y-card .value { color: var(--accent); }
+.output-card.pred-card { border-color: var(--positive); }
+.output-card.pred-card .value { color: var(--positive); }
+.output-card.conf-card { border-color: var(--warning); }
+.output-card.conf-card .value { color: var(--warning); }
+
+/* ============================================================
+   MATH VIZ
+   ============================================================ */
+.math-block {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.82rem;
+  background: rgba(0,0,0,0.15); padding: 0.75rem; border-radius: var(--radius-sm);
+  white-space: pre-wrap; line-height: 1.7; border: 1px solid var(--glass-border);
+}
+[data-theme="light"] .math-block { background: rgba(0,0,0,0.03); }
+.math-block .pos { color: var(--positive); }
+.math-block .neg { color: var(--negative); }
+.math-block .accent { color: var(--accent); font-weight: 700; }
+
+/* ============================================================
+   NETWORK SVG
+   ============================================================ */
+.network-wrap {
+  background: rgba(0,0,0,0.12); border-radius: var(--radius-sm);
+  padding: 0.5rem; overflow: auto; border: 1px solid var(--glass-border);
+}
+[data-theme="light"] .network-wrap { background: rgba(0,0,0,0.02); }
+#networkSvg { display: block; margin: 0 auto; }
+.neuron-label { font-size: 15px; fill: var(--text-secondary); font-weight: 600; }
+.neuron-circle { transition: all 0.3s; }
+
+/* ============================================================
+   ACTIVATION GRAPH
+   ============================================================ */
+.graph-wrap { position: relative; background: rgba(0,0,0,0.12); border-radius: var(--radius-sm); padding: 0.5rem; border: 1px solid var(--glass-border); }
+[data-theme="light"] .graph-wrap { background: rgba(0,0,0,0.02); }
+#actCanvas { display: block; width: 100%; }
+.act-info { margin-top: 0.75rem; }
+.act-equation {
+  font-family: 'JetBrains Mono', monospace; font-size: 0.88rem; font-weight: 600;
+  color: var(--text-primary); padding: 0.5rem; background: var(--glass-hover);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px; text-align: center; margin-bottom: 0.5rem;
+}
+.act-desc { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* ============================================================
+   EDUCATIONAL PANEL
+   ============================================================ */
+.edu-panel { display: none; }
+.edu-panel.active { display: block; animation: fadeIn 0.4s; }
+.edu-item { margin-bottom: 1rem; }
+.edu-item h3 { font-size: 0.95rem; color: var(--text-primary); margin-bottom: 0.3rem; }
+.edu-item p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6; }
+
+/* ============================================================
+   HISTORY
+   ============================================================ */
+.history-list { max-height: 240px; overflow-y: auto; }
+.history-item {
+  padding: 0.5rem 0.7rem; margin-bottom: 0.3rem; border-radius: 8px;
+  background: rgba(0,0,0,0.1); font-size: 0.78rem; font-family: monospace;
+  border-left: 3px solid var(--accent); cursor: pointer; transition: background 0.2s;
+}
+[data-theme="light"] .history-item { background: rgba(0,0,0,0.03); }
+.history-item:hover { background: rgba(0,0,0,0.08); }
+.history-list::-webkit-scrollbar { width: 6px; }
+.history-list::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+
+/* ============================================================
+   MISC
+   ============================================================ */
+.section-title { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 0.5rem; font-weight: 700; }
+.divider { height: 1px; background: var(--glass-border); margin: 0.75rem 0; }
+.pulse { animation: pulse 0.5s; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+.value-changed { animation: valueFlash 0.6s; }
+@keyframes valueFlash { 0% { background: rgba(245,158,11,0.3); } 100% { background: transparent; } }
+.badge {
+  display: inline-block; padding: 0.15rem 0.5rem; border-radius: 20px;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+}
+.badge-pos { background: rgba(16,185,129,0.2); color: var(--positive); }
+.badge-neg { background: rgba(239,68,68,0.2); color: var(--negative); }
+.badge-neutral { background: var(--glass-hover); color: var(--text-primary); border: 1px solid var(--glass-border); }
+.step-badge {
+  display: inline-block; padding: 0.1rem 0.45rem; border-radius: 6px;
+  font-size: 0.68rem; font-weight: 700; margin-right: 0.3rem;
+  background: var(--text-secondary); color: var(--bg-grad-1);
+}
+.footer-note { text-align: center; padding: 1.5rem; color: var(--text-muted); font-size: 0.8rem; }
+.footer-note a { transition: color var(--transition); }
+.footer-note a:hover { color: var(--text-primary); }
+.toggle-switch { position: relative; width: 44px; height: 24px; }
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; cursor: pointer; border-radius: 24px;
+  background: var(--glass-hover); border: 1px solid var(--glass-border); transition: 0.3s;
+}
+.toggle-slider::before {
+  content: ""; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px;
+  background: var(--accent); border-radius: 50%; transition: 0.3s;
+}
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+.toggle-label { font-size: 0.78rem; color: var(--text-secondary); }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; }
+</style>
+</head>
+<body>
+
+<!-- ===================== HEADER ===================== -->
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-logo">🧠</div>
+    <div class="brand-text">
+      <h1>Perceptron Visualizer</h1>
+    </div>
+  </div>
+  <div class="header-actions">
+    <div style="display:flex;align-items:center;gap:0.4rem;">
+      <span class="toggle-label">🌙</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="themeToggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+      <span class="toggle-label">☀️</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ===================== TOP CONTROL BAR ===================== -->
+  <div class="card">
+    <div class="flex-between" style="flex-wrap:wrap;gap:0.75rem;">
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <div>
+          <label for="numInputs" data-tooltip="Number of input features (1–10)">Inputs</label>
+          <select id="numInputs" style="width:70px;">
+            <option>1</option><option>2</option><option selected>3</option>
+            <option>4</option><option>5</option><option>6</option>
+            <option>7</option><option>8</option><option>9</option><option>10</option>
+          </select>
+        </div>
+        <div>
+          <label for="actFunc" data-tooltip="Choose activation function applied to z">Activation</label>
+          <select id="actFunc" style="width:150px;">
+            <option value="step">Step</option>
+            <option value="sigmoid">Sigmoid</option>
+            <option value="tanh">Tanh</option>
+            <option value="relu">ReLU</option>
+            <option value="leakyRelu">Leaky ReLU</option>
+            <option value="linear">Linear</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-sm" id="randomInputs" data-tooltip="Fill inputs with random values">🎲 Randomize Inputs</button>
+        <button class="btn btn-secondary btn-sm" id="compareAct" data-tooltip="Show output of all activation functions at once">⚖️ Compare Activations</button>
+        <button class="btn btn-secondary btn-sm" id="randomWeights" data-tooltip="Randomize all weights and bias">🔀 Randomize Weights</button>
+        <button class="btn btn-ghost btn-sm" id="resetAll" data-tooltip="Reset everything to defaults">♻️ Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MAIN GRID ===================== -->
+  <div class="grid-main">
+
+    <!-- LEFT COLUMN: Inputs, Weights, Bias -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card">
+        <h2>Inputs</h2>
+        <div id="inputsContainer"></div>
+      </div>
+
+      <div class="card">
+        <h2>Weights</h2>
+        <div id="weightsContainer"></div>
+      </div>
+
+      <div class="card">
+        <h2>Bias</h2>
+        <div class="weight-row" style="grid-template-columns:50px 1fr 70px;">
+          <span class="w-label" style="color:var(--warning);">b</span>
+          <input type="range" id="biasSlider" min="-10" max="10" step="0.1" value="0" data-tooltip="Bias shifts the activation threshold">
+          <input type="number" id="biasInput" min="-10" max="10" step="0.1" value="0">
+        </div>
+      </div>
+    </div>
+
+    <!-- CENTER COLUMN: Network + Computation -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card">
+        <h2>Visualization</h2>
+        <div class="network-wrap">
+          <svg id="networkSvg" width="100%" height="340"></svg>
+        </div>
+        <div style="display:flex;gap:1rem;justify-content:center;margin-top:0.5rem;flex-wrap:wrap;font-size:0.75rem;color:var(--text-secondary);">
+          <span><span style="display:inline-block;width:14px;height:3px;background:var(--positive);vertical-align:middle;border-radius:2px;"></span> Positive weight</span>
+          <span><span style="display:inline-block;width:14px;height:3px;background:var(--negative);vertical-align:middle;border-radius:2px;"></span> Negative weight</span>
+          <span><span style="display:inline-block;width:14px;height:3px;background:var(--warning);vertical-align:middle;border-radius:2px;"></span> Bias</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Step-by-step calculation</h2>
+        <div class="steps-list" id="stepsContainer"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: Output, Math, Graph -->
+    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+      <div class="card">
+        <h2>Output</h2>
+        <div style="padding:1.5rem 1.25rem;border-radius:var(--radius-sm);background:var(--glass-hover);border:1px solid var(--glass-border);text-align:center;">
+          <div style="font-size:3rem;font-weight:800;color:var(--text-primary);" id="outFinal">0.00</div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.3rem;" id="outFinalDesc">y = Step(z)</div>
+        </div>
+        <div style="font-size:0.8rem;color:var(--text-secondary); margin: 2px;">
+          Activation: <span class="badge badge-neutral" id="actBadge">Step</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Activation Function Graph</h2>
+        <div class="graph-wrap">
+          <canvas id="actCanvas" width="400" height="220"></canvas>
+        </div>
+        <div class="act-info">
+          <div class="act-equation" id="actEquation">f(z) = 1 if z ≥ 0, else 0</div>
+          <div class="act-desc" id="actDesc">The step function outputs 1 if the weighted sum is non-negative, and 0 otherwise. It's the original perceptron activation.</div>
+        </div>
+      </div>
+
+      </div>
+  </div>
+
+  <!-- ===================== COMPARE PANEL ===================== -->
+  <div class="card edu-panel" id="comparePanel">
+    <h2><span class="icon">⚖️</span> Activation Function Comparison</h2>
+    <div class="section-title">Output of every activation function for the current z</div>
+    <div id="compareTable"></div>
+  </div>
+
+</div>
+
+<div class="footer-note">
+  <a href="https://quantropy.tech/" target="_blank" style="color:var(--text-secondary);text-decoration:none;font-weight:600;letter-spacing:0.02em;">Quantropy</a>
+</div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+const state = {
+  numInputs: 3,
+  inputs: [2, 3, 1],
+  weights: [0.5, -1.2, 0.8],
+  bias: 1.5,
+  activation: 'step',
+};
+
+const ACT_FUNCS = {
+  step: {
+    name: 'Step',
+    eq: 'f(z) = 1 if z ≥ 0, else 0',
+    desc: 'The step function outputs 1 if the weighted sum is non-negative, and 0 otherwise. It is the original perceptron activation used for binary classification.',
+    fn: z => z >= 0 ? 1 : 0,
+    range: [-6, 6],
+  },
+  sigmoid: {
+    name: 'Sigmoid',
+    eq: 'f(z) = 1 / (1 + e⁻ᶻ)',
+    desc: 'Sigmoid squashes values into (0, 1), making it interpretable as a probability. Common in the output layer of binary classifiers.',
+    fn: z => 1 / (1 + Math.exp(-z)),
+    range: [-10, 10],
+  },
+  tanh: {
+    name: 'Tanh',
+    eq: 'f(z) = (eᶻ - e⁻ᶻ) / (eᶻ + e⁻ᶻ)',
+    desc: 'Tanh outputs values in (-1, 1). It is zero-centered, which often makes training easier than sigmoid.',
+    fn: z => Math.tanh(z),
+    range: [-6, 6],
+  },
+  relu: {
+    name: 'ReLU',
+    eq: 'f(z) = max(0, z)',
+    desc: 'Rectified Linear Unit outputs z if positive, else 0. It is the most popular activation in deep networks due to simplicity and good gradient behavior.',
+    fn: z => Math.max(0, z),
+    range: [-6, 6],
+  },
+  leakyRelu: {
+    name: 'Leaky ReLU',
+    eq: 'f(z) = z if z > 0, else 0.01·z',
+    desc: 'Leaky ReLU allows a small gradient when z is negative, preventing the "dying ReLU" problem where neurons stop learning.',
+    fn: z => z > 0 ? z : 0.01 * z,
+    range: [-6, 6],
+  },
+  linear: {
+    name: 'Linear',
+    eq: 'f(z) = z',
+    desc: 'Linear (identity) activation returns z unchanged. Used in regression tasks where the output is a continuous value.',
+    fn: z => z,
+    range: [-10, 10],
+  },
+};
+
+/* ============================================================
+   DOM HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const fmt = n => {
+  if (Object.is(n, -0)) n = 0;
+  return Math.abs(n) < 0.001 ? '0.00' : n.toFixed(2);
+};
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/* ============================================================
+   BUILD INPUTS
+   ============================================================ */
+function buildInputs() {
+  const c = $('inputsContainer');
+  c.innerHTML = '';
+  for (let i = 0; i < state.numInputs; i++) {
+    const row = document.createElement('div');
+    row.className = 'param-row';
+    row.innerHTML = `
+      <span class="param-label">x${sub(i+1)}</span>
+      <input type="range" min="-10" max="10" step="0.1" value="${state.inputs[i] ?? 0}" data-idx="${i}" data-type="input-slider" data-tooltip="Input feature x${sub(i+1)}">
+      <input type="number" min="-10" max="10" step="0.1" value="${state.inputs[i] ?? 0}" data-idx="${i}" data-type="input-num" data-tooltip="Numeric value of x${sub(i+1)}">`;
+    c.appendChild(row);
+  }
+  // wire events
+  c.querySelectorAll('[data-type="input-slider"]').forEach(el => el.addEventListener('input', e => {
+    const i = +e.target.dataset.idx;
+    state.inputs[i] = +e.target.value;
+    c.querySelector(`[data-type="input-num"][data-idx="${i}"]`).value = e.target.value;
+    update();
+  }));
+  c.querySelectorAll('[data-type="input-num"]').forEach(el => el.addEventListener('input', e => {
+    const i = +e.target.dataset.idx;
+    let v = clamp(+e.target.value || 0, -10, 10);
+    state.inputs[i] = v;
+    c.querySelector(`[data-type="input-slider"][data-idx="${i}"]`).value = v;
+    update();
+  }));
+}
+
+function buildWeights() {
+  const c = $('weightsContainer');
+  c.innerHTML = '';
+  for (let i = 0; i < state.numInputs; i++) {
+    const w = state.weights[i] ?? 0;
+    const row = document.createElement('div');
+    row.className = 'weight-row ' + (w >= 0 ? 'positive' : 'negative');
+    row.dataset.idx = i;
+    row.innerHTML = `
+      <span class="w-label">w${sub(i+1)}</span>
+      <input type="range" min="-10" max="10" step="0.1" value="${w}" data-idx="${i}" data-type="weight-slider" data-tooltip="Weight for input x${sub(i+1)}. Green = positive, red = negative">
+      <input type="number" min="-10" max="10" step="0.1" value="${w}" data-idx="${i}" data-type="weight-num" data-tooltip="Numeric weight value">`;
+    c.appendChild(row);
+  }
+  c.querySelectorAll('[data-type="weight-slider"]').forEach(el => el.addEventListener('input', e => {
+    const i = +e.target.dataset.idx;
+    state.weights[i] = +e.target.value;
+    const numEl = c.querySelector(`[data-type="weight-num"][data-idx="${i}"]`);
+    numEl.value = e.target.value;
+    updateWeightRowColor(i);
+    update();
+  }));
+  c.querySelectorAll('[data-type="weight-num"]').forEach(el => el.addEventListener('input', e => {
+    const i = +e.target.dataset.idx;
+    let v = clamp(+e.target.value || 0, -10, 10);
+    state.weights[i] = v;
+    c.querySelector(`[data-type="weight-slider"][data-idx="${i}"]`).value = v;
+    updateWeightRowColor(i);
+    update();
+  }));
+}
+
+function updateWeightRowColor(i) {
+  const row = document.querySelector(`.weight-row[data-idx="${i}"]`);
+  if (!row) return;
+  row.classList.toggle('positive', state.weights[i] >= 0);
+  row.classList.toggle('negative', state.weights[i] < 0);
+}
+
+function sub(n) {
+  const subs = '₀₁₂₃₄₅₆₇₈₉';
+  return String(n).split('').map(d => subs[+d] || d).join('');
+}
+
+/* ============================================================
+   BIAS CONTROL
+   ============================================================ */
+$('biasSlider').addEventListener('input', e => {
+  state.bias = +e.target.value;
+  $('biasInput').value = e.target.value;
+  update();
+});
+$('biasInput').addEventListener('input', e => {
+  state.bias = clamp(+e.target.value || 0, -10, 10);
+  $('biasSlider').value = state.bias;
+  update();
+});
+
+/* ============================================================
+   ACTIVATION SELECT
+   ============================================================ */
+$('actFunc').addEventListener('change', e => {
+  state.activation = e.target.value;
+  update();
+});
+
+/* ============================================================
+   NUM INPUTS SELECT
+   ============================================================ */
+$('numInputs').addEventListener('change', e => {
+  const n = +e.target.value;
+  // preserve existing values, pad with defaults
+  const oldIn = [...state.inputs], oldW = [...state.weights];
+  state.numInputs = n;
+  state.inputs = Array.from({length:n}, (_,i) => oldIn[i] ?? 1);
+  state.weights = Array.from({length:n}, (_,i) => oldW[i] ?? 0.5);
+  buildInputs();
+  buildWeights();
+  update();
+});
+
+/* ============================================================
+   COMPUTE
+   ============================================================ */
+function compute() {
+  const prods = [];
+  let sum = 0;
+  for (let i = 0; i < state.numInputs; i++) {
+    const p = state.inputs[i] * state.weights[i];
+    prods.push(p);
+    sum += p;
+  }
+  const z = sum + state.bias;
+  const y = ACT_FUNCS[state.activation].fn(z);
+  return { prods, sum, z, y };
+}
+
+/* ============================================================
+   UPDATE — main render
+   ============================================================ */
+function update() {
+  const { prods, sum, z, y } = compute();
+
+  // Final output
+  $('outFinal').textContent = fmt(y);
+  $('actBadge').textContent = ACT_FUNCS[state.activation].name;
+  let finalDesc = `y = ${ACT_FUNCS[state.activation].name}(${fmt(z)}) = ${fmt(y)}`;
+  if (state.activation === 'step' || state.activation === 'sigmoid') {
+    finalDesc += `  →  Class ${y >= 0.5 ? 1 : 0}`;
+  }
+  $('outFinalDesc').textContent = finalDesc;
+
+  // Steps
+  renderSteps(prods, sum, z, y);
+  // Network
+  renderNetwork(z, y);
+  // Activation graph
+  drawActivationGraph(z);
+  // Activation info
+  const af = ACT_FUNCS[state.activation];
+  $('actEquation').textContent = af.eq;
+  $('actDesc').textContent = af.desc;
+  // Compare panel
+  renderCompare(z);
+}
+
+/* ============================================================
+   RENDER STEPS
+   ============================================================ */
+function renderSteps(prods, sum, z, y) {
+  const c = $('stepsContainer');
+  c.innerHTML = '';
+  // individual multiplications
+  prods.forEach((p, i) => {
+    const div = document.createElement('div');
+    div.className = 'step-item';
+    div.innerHTML = `<span class="step-badge">${i+1}</span>x${sub(i+1)}·w${sub(i+1)} = ${fmt(state.inputs[i])} × ${fmt(state.weights[i])} = <strong>${fmt(p)}</strong>`;
+    c.appendChild(div);
+  });
+  // running sum
+  const sumDiv = document.createElement('div');
+  sumDiv.className = 'step-item highlight';
+  sumDiv.innerHTML = `<span class="step-badge">Σ</span>Σ(xᵢ·wᵢ) = ${prods.map(fmt).join(' + ')} = <strong>${fmt(sum)}</strong>`;
+  c.appendChild(sumDiv);
+  // bias
+  const biasDiv = document.createElement('div');
+  biasDiv.className = 'step-item highlight';
+  biasDiv.innerHTML = `<span class="step-badge">b</span>z = Σ(xᵢ·wᵢ) + b = ${fmt(sum)} + ${fmt(state.bias)} = <strong>${fmt(z)}</strong>`;
+  c.appendChild(biasDiv);
+  // activation
+  const actDiv = document.createElement('div');
+  actDiv.className = 'step-item final';
+  actDiv.innerHTML = `<span class="step-badge">f</span>y = ${ACT_FUNCS[state.activation].name}(z) = ${ACT_FUNCS[state.activation].name}(${fmt(z)}) = <strong>${fmt(y)}</strong>`;
+  c.appendChild(actDiv);
+}
+
+/* ============================================================
+   RENDER NETWORK (SVG)
+   ============================================================ */
+function renderNetwork(z, y) {
+  const svg = $('networkSvg');
+  const n = state.numInputs;
+  const W = 620, H = 340;
+  const inX = 70, perX = 310, outX = 550;
+  const inSpacing = Math.min(40, 240 / Math.max(n, 1));
+  const inStartY = H/2 - (inSpacing * (n-1)) / 2;
+  const perY = H/2;
+  const outY = H/2;
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  let html = '';
+
+  // Bias neuron (top)
+  const biasX = 60, biasY = 30;
+
+  // Connections input -> perceptron
+  for (let i = 0; i < n; i++) {
+    const y1 = inStartY + i * inSpacing;
+    const w = state.weights[i];
+    const thick = clamp(Math.abs(w) * 1.5, 1, 10);
+    const color = w >= 0 ? 'var(--positive)' : 'var(--negative)';
+    html += `<line x1="${inX}" y1="${y1}" x2="${perX}" y2="${perY}" stroke="${color}" stroke-width="${thick}" opacity="0.7" class="conn" data-i="${i}"/>`;
+    // signal dot
+    html += `<circle r="3" fill="${color}" class="signal" data-i="${i}"><animateMotion dur="1.2s" repeatCount="1" path="M${inX},${y1} L${perX},${perY}"/></circle>`;
+  }
+  // Bias connection
+  html += `<line x1="${biasX}" y1="${biasY}" x2="${perX}" y2="${perY}" stroke="var(--warning)" stroke-width="${clamp(Math.abs(state.bias)*1.5,1,10)}" opacity="0.7"/>`;
+  html += `<circle r="3" fill="var(--warning)"><animateMotion dur="1.2s" repeatCount="1" path="M${biasX},${biasY} L${perX},${perY}"/></circle>`;
+
+  // perceptron -> output
+  html += `<line x1="${perX}" y1="${perY}" x2="${outX}" y2="${outY}" stroke="var(--text-primary)" stroke-width="3" opacity="0.7"/>`;
+  html += `<circle r="4" fill="var(--text-primary)"><animateMotion dur="1s" repeatCount="1" path="M${perX},${perY} L${outX},${outY}"/></circle>`;
+
+  // Input neurons
+  for (let i = 0; i < n; i++) {
+    const y1 = inStartY + i * inSpacing;
+    html += `<circle cx="${inX}" cy="${y1}" r="20" fill="var(--glass-hover)" stroke="var(--text-primary)" stroke-width="2" class="neuron-circle"/>`;
+    html += `<text x="${inX}" y="${y1+5}" text-anchor="middle" font-size="14" fill="var(--text-primary)" font-weight="700">x${sub(i+1)}</text>`;
+    html += `<text x="${inX-34}" y="${y1+5}" text-anchor="end" class="neuron-label">${fmt(state.inputs[i])}</text>`;
+  }
+
+  // Bias neuron
+  html += `<circle cx="${biasX}" cy="${biasY}" r="18" fill="var(--glass-hover)" stroke="var(--warning)" stroke-width="2"/>`;
+  html += `<text x="${biasX}" y="${biasY+5}" text-anchor="middle" font-size="14" fill="var(--text-primary)" font-weight="700">b</text>`;
+  html += `<text x="${biasX-26}" y="${biasY+5}" text-anchor="end" class="neuron-label">${fmt(state.bias)}</text>`;
+
+  // Perceptron neuron
+  const perColor = 'var(--text-primary)';
+  html += `<circle cx="${perX}" cy="${perY}" r="32" fill="var(--glass-hover)" stroke="${perColor}" stroke-width="3" class="neuron-circle"/>`;
+  html += `<text x="${perX}" y="${perY-3}" text-anchor="middle" font-size="13" fill="var(--text-secondary)">Σ f</text>`;
+  html += `<text x="${perX}" y="${perY+13}" text-anchor="middle" font-size="14" fill="var(--text-primary)" font-weight="700">z=${fmt(z)}</text>`;
+
+  // Output neuron
+  html += `<circle cx="${outX}" cy="${outY}" r="24" fill="var(--glass-hover)" stroke="${perColor}" stroke-width="3" class="neuron-circle"/>`;
+  html += `<text x="${outX}" y="${outY+5}" text-anchor="middle" font-size="15" fill="var(--text-primary)" font-weight="700">${fmt(y)}</text>`;
+  html += `<text x="${outX+34}" y="${outY+5}" class="neuron-label">y</text>`;
+
+  // Labels
+  html += `<text x="${inX}" y="${H-8}" text-anchor="middle" class="neuron-label">Inputs</text>`;
+  html += `<text x="${perX}" y="${H-8}" text-anchor="middle" class="neuron-label">Perceptron</text>`;
+  html += `<text x="${outX}" y="${H-8}" text-anchor="middle" class="neuron-label">Output</text>`;
+
+  svg.innerHTML = html;
+}
+
+/* ============================================================
+   ACTIVATION GRAPH (Canvas)
+   ============================================================ */
+let graphAnim = null;
+function drawActivationGraph(currentZ) {
+  const canvas = $('actCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const cssW = canvas.offsetWidth || 400;
+  const cssH = 220;
+  canvas.width = cssW * dpr;
+  canvas.height = cssH * dpr;
+  canvas.style.height = cssH + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  const af = ACT_FUNCS[state.activation];
+  const [rMin, rMax] = af.range;
+  const pad = 30;
+  const W = cssW, H = cssH;
+  const xToPx = x => pad + (x - rMin) / (rMax - rMin) * (W - 2*pad);
+  const yRange = state.activation === 'sigmoid' ? [0, 1]
+    : state.activation === 'tanh' ? [-1, 1]
+    : state.activation === 'step' ? [-0.2, 1.2]
+    : state.activation === 'linear' ? [rMin, rMax]
+    : state.activation === 'leakyRelu' ? [rMin, rMax]
+    : [rMin, rMax]; // relu
+  const [yMin, yMax] = yRange;
+  const yToPx = y => H - pad - (y - yMin) / (yMax - yMin) * (H - 2*pad);
+
+  // animate
+  if (graphAnim) cancelAnimationFrame(graphAnim);
+  let progress = 0;
+  function frame() {
+    progress = Math.min(1, progress + 0.06);
+    ctx.clearRect(0, 0, W, H);
+
+    // grid
+    ctx.strokeStyle = getCss('--glass-border');
+    ctx.lineWidth = 1;
+    // axes
+    ctx.strokeStyle = getCss('--text-muted');
+    ctx.beginPath();
+    ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2); // x axis (y=0)
+    ctx.moveTo(pad, pad); ctx.lineTo(pad, H-pad); // y axis (x=0)
+    ctx.stroke();
+    // zero line for y
+    if (yMin < 0 && yMax > 0) {
+      ctx.strokeStyle = getCss('--text-muted');
+      ctx.setLineDash([3,3]);
+      ctx.beginPath();
+      const y0 = yToPx(0);
+      ctx.moveTo(pad, y0); ctx.lineTo(W-pad, y0);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // axis labels
+    ctx.fillStyle = getCss('--text-secondary');
+    ctx.font = '10px sans-serif';
+    ctx.fillText('z', W-pad+2, H/2+3);
+    ctx.fillText('y', pad-12, pad-4);
+    ctx.fillText(rMin, pad-14, H-pad+12);
+    ctx.fillText(rMax, W-pad-14, H-pad+12);
+
+    // curve
+    const accent = getCss('--accent');
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    const steps = 200;
+    const drawSteps = Math.floor(steps * progress);
+    for (let i = 0; i <= drawSteps; i++) {
+      const x = rMin + (rMax - rMin) * i / steps;
+      const yv = af.fn(x);
+      const px = xToPx(x), py = yToPx(clamp(yv, yMin, yMax));
+      if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+    }
+    ctx.stroke();
+
+    // current z marker
+    const cz = clamp(currentZ, rMin, rMax);
+    const cy = af.fn(currentZ);
+    const zpx = xToPx(cz), zpy = yToPx(clamp(cy, yMin, yMax));
+    // vertical dashed line
+    ctx.strokeStyle = getCss('--warning');
+    ctx.setLineDash([4,4]);
+    ctx.beginPath();
+    ctx.moveTo(zpx, pad); ctx.lineTo(zpx, H-pad);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // point
+    ctx.fillStyle = getCss('--warning');
+    ctx.beginPath();
+    ctx.arc(zpx, zpy, 6, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // label
+    ctx.fillStyle = getCss('--text-primary');
+    ctx.font = 'bold 11px sans-serif';
+    ctx.fillText(`z=${fmt(currentZ)}`, zpx+8, zpy-8);
+    ctx.fillText(`y=${fmt(cy)}`, zpx+8, zpy+14);
+
+    if (progress < 1) graphAnim = requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+function getCss(varName) {
+  return getComputedStyle(document.documentElement).getPropertyValue(varName).trim() || '#888';
+}
+
+/* ============================================================
+   COMPARE ACTIVATIONS
+   ============================================================ */
+function renderCompare(z) {
+  const tbl = $('compareTable');
+  let html = '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.5rem;font-size:0.82rem;">';
+  html += '<div style="font-weight:700;color:var(--text-secondary);">Function</div><div style="font-weight:700;color:var(--text-secondary);">Output y</div><div style="font-weight:700;color:var(--text-secondary);">Prediction</div>';
+  for (const key in ACT_FUNCS) {
+    const af = ACT_FUNCS[key];
+    const y = af.fn(z);
+    const pred = key === 'step' || key === 'sigmoid' ? (y >= 0.5 ? 1 : 0) : '—';
+    const active = key === state.activation ? 'background:var(--glass-hover);font-weight:700;border:1px solid var(--glass-border);' : '';
+    html += `<div style="padding:0.4rem;border-radius:6px;${active}">${af.name}</div>`;
+    html += `<div style="padding:0.4rem;border-radius:6px;${active}">${fmt(y)}</div>`;
+    html += `<div style="padding:0.4rem;border-radius:6px;${active}">${pred}</div>`;
+  }
+  html += '</div>';
+  tbl.innerHTML = html;
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+$('randomInputs').addEventListener('click', () => {
+  for (let i = 0; i < state.numInputs; i++) state.inputs[i] = +(Math.random() * 20 - 10).toFixed(1);
+  buildInputs(); update();
+});
+$('randomWeights').addEventListener('click', () => {
+  for (let i = 0; i < state.numInputs; i++) state.weights[i] = +(Math.random() * 20 - 10).toFixed(1);
+  state.bias = +(Math.random() * 20 - 10).toFixed(1);
+  $('biasSlider').value = state.bias;
+  $('biasInput').value = state.bias;
+  buildWeights(); update();
+});
+$('resetAll').addEventListener('click', () => {
+  state.numInputs = 3;
+  state.inputs = [2, 3, 1];
+  state.weights = [0.5, -1.2, 0.8];
+  state.bias = 1.5;
+  state.activation = 'step';
+  $('numInputs').value = 3;
+  $('actFunc').value = 'step';
+  $('biasSlider').value = 1.5;
+  $('biasInput').value = 1.5;
+  buildInputs(); buildWeights(); update();
+});
+
+// Compare toggle
+$('compareAct').addEventListener('click', () => {
+  $('comparePanel').classList.toggle('active');
+  $('comparePanel').scrollIntoView({behavior:'smooth'});
+  renderCompare(compute().z);
+});
+
+// Theme toggle
+$('themeToggle').addEventListener('change', e => {
+  document.documentElement.setAttribute('data-theme', e.target.checked ? 'light' : 'dark');
+  drawActivationGraph(compute().z);
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+buildInputs();
+buildWeights();
+update();
+</script>
+</body>
+</html>
